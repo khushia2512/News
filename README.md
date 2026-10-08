@@ -12,14 +12,23 @@ Given a news article's title, predict which publisher wrote it, using only its w
 2. **Cleaning:** lowercase, remove punctuation, split into words.
 3. **Split:** 80% train / 20% test, stratified by publisher.
 4. **Doc2Vec (Gensim):** each article title becomes a 100-number vector (PV-DBOW with word training, 40 epochs).
-5. **ANN (scikit-learn MLPClassifier):** two hidden layers (128 and 64 neurons), ReLU, Adam optimizer, early stopping, softmax output over the publishers.
-6. **Evaluation:** accuracy, precision, recall, F1 and confusion matrix on the unseen test set.
+5. **ANN (scikit-learn MLPClassifier):** two hidden layers (256 and 128 neurons), ReLU, Adam optimizer, early stopping, softmax output over the publishers.
+6. **Evaluation:** accuracy, precision, recall, F1, false alarm rate, ROC-AUC, PR-AUC, top-2 accuracy and confusion matrix on the unseen test set.
 
 ## Results (test set)
 
-- **Accuracy:** 54.6%
-- **Macro F1:** 0.54
-- Finance publishers (NASDAQ, Businessweek) are easiest to identify because of specific words like "forex", "stocks" and "fed".
+| Metric | Score |
+|---|---|
+| Accuracy | 0.572 |
+| Precision (macro) | 0.572 |
+| Recall (macro) | 0.570 |
+| F1 (macro) | 0.565 |
+| False alarm rate (macro) | 0.086 |
+| ROC-AUC (macro, one-vs-rest) | 0.860 |
+| PR-AUC (macro) | 0.603 |
+| Top-2 accuracy | 0.765 |
+
+- Finance publishers are easiest to identify: NASDAQ reaches F1 0.80 and ROC-AUC 0.97, because of specific words like "forex", "stocks" and "fed".
 - General news sites are hardest because they write about every topic.
 
 ## Run it
