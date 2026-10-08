@@ -1,54 +1,35 @@
-# Predicting the Source of a News Headline
+# Predicting the Source of a News Article (Doc2Vec + ANN)
 
-Given a news headline, predict which publisher wrote it, using only the writing style and vocabulary of the headline.
+Given a news article's title, predict which publisher wrote it, using only its words and writing style.
 
-Dataset: [UCI News Aggregator (Kaggle)](https://www.kaggle.com/datasets/uciml/news-aggregator-dataset), 422,419 headlines. Download `uci-news-aggregator.csv` and place it next to the notebooks.
+## Dataset
 
-## Notebooks
+[UCI News Aggregator (Kaggle)](https://www.kaggle.com/datasets/uciml/news-aggregator-dataset): over 400,000 news articles collected from many publishers, with the title, URL, publisher, category and timestamp of each article. Publishers with a similar number of articles are selected so the classes are balanced.
 
-| File | What it does |
-|---|---|
-| `MAIN FILE.ipynb` | First version: Doc2Vec (PV-DBOW) with one vector per publisher, prediction by cosine similarity |
-| `News_Source_Evaluation.ipynb` | Proper evaluation: train/test split, Doc2Vec + ANN, baselines, accuracy/precision/recall/F1 |
+## How it works
 
-## Data
+1. **Data selection:** keep the article title and publisher. The URL is dropped because it contains the publisher name.
+2. **Cleaning:** lowercase, remove punctuation, split into words.
+3. **Split:** 80% train / 20% test, stratified by publisher.
+4. **Doc2Vec (Gensim):** each article title becomes a 100-number vector (PV-DBOW with word training, 40 epochs).
+5. **ANN (scikit-learn MLPClassifier):** two hidden layers (128 and 64 neurons), ReLU, Adam optimizer, early stopping, softmax output over the publishers.
+6. **Evaluation:** accuracy, precision, recall, F1 and confusion matrix on the unseen test set.
 
-Publishers with 2,000 to 3,000 headlines were kept, giving 6 balanced classes and 13,751 headlines:
-Huffington Post, Businessweek, Contactmusic.com, Daily Mail, NASDAQ, Examiner.com.
+## Results (test set)
 
-Text is lowercased, punctuation removed and split into words. The data is split 80/20 (stratified): 11,000 train, 2,751 test.
+- **Accuracy:** 54.6%
+- **Macro F1:** 0.54
+- Finance publishers (NASDAQ, Businessweek) are easiest to identify because of specific words like "forex", "stocks" and "fed".
+- General news sites are hardest because they write about every topic.
 
-## Methods
+## Run it
 
-1. **Doc2Vec + cosine similarity** (original approach): each headline is tagged with its publisher, so Doc2Vec learns one vector per publisher. A new headline is converted with `infer_vector` and assigned to the most similar publisher vector.
-2. **Doc2Vec + Logistic Regression**: each headline gets its own 100-dimension PV-DBOW vector, then a linear classifier.
-3. **Doc2Vec + ANN**: same vectors, fed to a neural network (128 → 64 hidden units, ReLU, Adam, early stopping, softmax output over 6 publishers).
-4. **TF-IDF + Logistic Regression**: word and word-pair (1–2 gram) TF-IDF features, used as a baseline.
+```bash
+pip install gensim scikit-learn pandas numpy
+```
+Download `uci-news-aggregator.csv` from Kaggle, put it next to the notebook, and run `News_Source_Doc2Vec_ANN.ipynb`.
 
-## Results (held-out test set, 2,751 headlines)
+## Next steps
 
-| Method | Accuracy | Precision (macro) | Recall (macro) | F1 (macro) |
-|---|---|---|---|---|
-| Doc2Vec + cosine similarity | 0.526 | 0.543 | 0.527 | 0.497 |
-| Doc2Vec + Logistic Regression | 0.501 | 0.502 | 0.499 | 0.498 |
-| Doc2Vec + ANN | 0.517 | 0.527 | 0.514 | 0.514 |
-| TF-IDF + Logistic Regression | **0.629** | **0.630** | **0.629** | **0.629** |
-
-Random guessing over 6 balanced classes gives about 0.167.
-
-## Findings
-
-- Finance publishers are easiest to identify (NASDAQ F1 0.76, Businessweek 0.63) because of specific vocabulary such as "forex", "stocks" and "fed".
-- General news publishers are hardest (Huffington Post 0.40, Examiner.com 0.36) because they cover every topic and overlap with the others.
-- On very short texts like headlines, TF-IDF keyword features beat Doc2Vec embeddings: exact words and names matter more than overall meaning.
-
-## Possible improvements
-
-- Fine-tune a transformer model (e.g. DistilBERT) on the headlines
-- Use the full article text instead of only the headline
-- Tune Doc2Vec (vector size, epochs, PV-DM vs PV-DBOW) and the ANN with cross-validation
-- Combine TF-IDF and Doc2Vec features
-
-## Tech
-
-Python, pandas, Gensim (Doc2Vec), scikit-learn (MLPClassifier, LogisticRegression, TF-IDF)
+- Use the full article text instead of only titles
+- Try a transformer model such as DistilBERT
